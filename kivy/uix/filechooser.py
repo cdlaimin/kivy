@@ -89,7 +89,6 @@ from weakref import ref
 from time import time
 
 from kivy.core.text import DEFAULT_FONT
-from kivy.compat import string_types
 from kivy.factory import Factory
 from kivy.clock import Clock
 from kivy.lang import Builder
@@ -101,12 +100,12 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.properties import (
     StringProperty, ListProperty, BooleanProperty, ObjectProperty,
     NumericProperty, AliasProperty)
+import collections.abc
 from os import listdir
 from os.path import (
     basename, join, sep, normpath, expanduser, altsep,
     splitdrive, realpath, getsize, isdir, abspath, isfile, dirname)
 from fnmatch import fnmatch
-import collections
 
 platform = core_platform
 filesize_units = ('B', 'KB', 'MB', 'GB', 'TB')
@@ -665,7 +664,7 @@ class FileChooserController(RelativeLayout):
             return files
         filtered = []
         for filt in self.filters:
-            if isinstance(filt, collections.Callable):
+            if isinstance(filt, collections.abc.Callable):
                 filtered.extend([fn for fn in files if filt(self.path, fn)])
             else:
                 filtered.extend([fn for fn in files if fnmatch(fn, filt)])
@@ -793,7 +792,7 @@ class FileChooserController(RelativeLayout):
         if self._progress:
             return
         cls = self.progress_cls
-        if isinstance(cls, string_types):
+        if isinstance(cls, str):
             cls = Factory.get(cls)
         self._progress = cls(path=self.path)
         self._progress.value = 0

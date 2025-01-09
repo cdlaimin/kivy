@@ -9,7 +9,6 @@ TODO:
 include '../../lib/sdl2.pxi'
 
 from kivy.core.image import ImageData
-from kivy.compat import PY2
 
 cdef dict sdl2_cache = {}
 cdef list sdl2_cache_order = []
@@ -85,6 +84,19 @@ cdef class _SurfaceContainer:
         else:
             if TTF_GetFontKerning(font) != 0:
                 TTF_SetFontKerning(font, 0)
+
+        direction = container.options['font_direction']
+        if direction == 'ltr':
+            TTF_SetFontDirection(font, TTF_DIRECTION_LTR)
+        elif direction == 'rtl':
+            TTF_SetFontDirection(font, TTF_DIRECTION_RTL)
+        elif direction == 'ttb':
+            TTF_SetFontDirection(font, TTF_DIRECTION_TTB)
+        elif direction == 'btt':
+            TTF_SetFontDirection(font, TTF_DIRECTION_BTT)
+
+        fontscript = container.options['font_script_name']
+        TTF_SetFontScriptName(font, fontscript)
 
         if outline_width:
             TTF_SetFontOutline(font, outline_width)
@@ -205,8 +217,7 @@ def _get_extents(container, text):
     outline_width = container.options['outline_width']
     if font == NULL:
         return 0, 0
-    if not PY2:
-        text = text.encode('utf-8')
+    text = text.encode('utf-8')
     bytes_text = <bytes>text
     if outline_width:
         TTF_SetFontOutline(font, outline_width)

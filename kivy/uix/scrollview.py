@@ -7,6 +7,10 @@ ScrollView
 The :class:`ScrollView` widget provides a scrollable/pannable viewport that is
 clipped at the scrollview's bounding box.
 
+.. note::
+    Use :class:`~kivy.uix.recycleview.RecycleView` for generating large
+    numbers of widgets in order to display many data items.
+
 
 Scrolling Behavior
 ------------------
@@ -143,7 +147,6 @@ __all__ = ('ScrollView', )
 
 from functools import partial
 from kivy.animation import Animation
-from kivy.compat import string_types
 from kivy.config import Config
 from kivy.clock import Clock
 from kivy.factory import Factory
@@ -546,7 +549,7 @@ class ScrollView(StencilView):
         self.canvas.add(self.canvas_viewport)
 
         effect_cls = self.effect_cls
-        if isinstance(effect_cls, string_types):
+        if isinstance(effect_cls, str):
             effect_cls = Factory.get(effect_cls)
         if self.effect_x is None and effect_cls is not None:
             self.effect_x = effect_cls(target_widget=self._viewport)
@@ -583,7 +586,7 @@ class ScrollView(StencilView):
             value.target_widget = self._viewport
 
     def on_effect_cls(self, instance, cls):
-        if isinstance(cls, string_types):
+        if isinstance(cls, str):
             cls = Factory.get(cls)
         self.effect_x = cls(target_widget=self._viewport)
         self.effect_x.bind(scroll=self._update_effect_x)
@@ -668,6 +671,15 @@ class ScrollView(StencilView):
         ret = super(ScrollView, self).on_touch_down(touch)
         touch.pop()
         return ret
+
+    def on_motion(self, etype, me):
+        if me.type_id in self.motion_filter and 'pos' in me.profile:
+            me.push()
+            me.apply_transform_2d(self.to_local)
+            ret = super().on_motion(etype, me)
+            me.pop()
+            return ret
+        return super().on_motion(etype, me)
 
     def on_touch_down(self, touch):
         if self.dispatch('on_scroll_start', touch):
@@ -924,7 +936,7 @@ class ScrollView(StencilView):
             if not touch.ud['sv.handled']['y'] and self.do_scroll_y \
                     and self.effect_y:
                 height = self.height
-                if touch.ud.get('in_bar_y', False):
+                if touch.ud.get('in_bar_y', False) and self.vbar[1] != 1.0:
                     dy = touch.dy / float(height - height * self.vbar[1])
                     self.scroll_y = min(max(self.scroll_y + dy, 0.), 1.)
                     self._trigger_update_from_scroll()

@@ -54,6 +54,32 @@ KIVY_SDL2_PATH
         This path is required for the compilation of Kivy. It is not
         required for program execution.
 
+KIVY_SDL2_FRAMEWORKS_SEARCH_PATH
+    If set, the SDL2 frameworks from this path are used when compiling kivy
+    instead of the ones installed system-wide.
+
+    That path is used only on macOS, and must contain the SDL2.framework,
+    SDL_image.framework, SDL_mixer.framework and SDL_ttf.framework.
+
+    .. versionadded:: 2.1.0
+
+    .. warning::
+
+        This path is required for the compilation of Kivy. It is not
+        required for program execution.
+
+KIVY_DEPS_ROOT
+    If set, during build, Kivy will use this directory as the root one to
+    search for (only SDL ATM) dependencies. Please note that if `KIVY_SDL2_PATH` or
+    `KIVY_SDL2_FRAMEWORKS_SEARCH_PATH` are set, they will be used instead.
+
+    .. versionadded:: 2.2.0
+
+    .. warning::
+
+        This path is required for the compilation of Kivy. It is not
+        required for program execution.
+
 
 Configuration
 -------------
@@ -113,12 +139,12 @@ selector to a specific implementation.
 KIVY_WINDOW
     Implementation to use for creating the Window
 
-    Values: sdl2, pygame, x11, egl_rpi
+    Values: sdl2, x11, egl_rpi
 
 KIVY_TEXT
     Implementation to use for rendering text
 
-    Values: sdl2, pil, pygame, sdlttf
+    Values: sdl2, pil, sdlttf
 
 KIVY_VIDEO
     Implementation to use for rendering video
@@ -128,12 +154,15 @@ KIVY_VIDEO
 KIVY_AUDIO
     Implementation to use for playing audio
 
-    Values: sdl2, gstplayer, ffpyplayer, pygame, avplayer
+    Values: sdl2, gstplayer, ffpyplayer, avplayer
 
 KIVY_IMAGE
     Implementation to use for reading image
 
-    Values: sdl2, pil, pygame, imageio, tex, dds, gif
+    Values: sdl2, pil, imageio, tex, dds
+
+    .. versionchanged:: 2.0.0
+    Removed GPL `gif` implementation
 
 KIVY_CAMERA
     Implementation to use for reading camera
@@ -148,7 +177,7 @@ KIVY_SPELLING
 KIVY_CLIPBOARD
     Implementation to use for clipboard management
 
-    Values: sdl2, pygame, dummy, android
+    Values: sdl2, dummy, android
 
 Metrics
 -------
@@ -203,8 +232,9 @@ Texture blit    When blitting to a texture, the data (color and
     .. versionadded:: 1.8.1
 
 KIVY_BCM_DISPMANX_ID
-    Change the default Raspberry Pi display to use. The list of available value
-    is accessible in `vc_dispmanx_types.h`. Default value is 0:
+    Change the default Raspberry Pi display to use when using the egl_rpi
+    window provider. The list of available value is accessible in 
+    `vc_dispmanx_types.h`. Default value is 0:
 
     - 0: DISPMANX_ID_MAIN_LCD
     - 1: DISPMANX_ID_AUX_LCD
@@ -215,7 +245,8 @@ KIVY_BCM_DISPMANX_ID
     - 6: DISPMANX_ID_FORCE_OTHER
 
 KIVY_BCM_DISPMANX_LAYER
-    Change the default Raspberry Pi dispmanx layer. Default value is 0.
+    Change the default Raspberry Pi dispmanx layer when using the egl_rpi
+    window provider. Default value is 0.
 
     .. versionadded:: 1.10.1
 

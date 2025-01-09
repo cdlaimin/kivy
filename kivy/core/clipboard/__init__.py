@@ -45,7 +45,7 @@ class ClipboardBase(object):
         return []
 
     def _ensure_clipboard(self):
-        ''' Ensure that the clipboard has been properly initialised.
+        ''' Ensure that the clipboard has been properly initialized.
         '''
 
         if hasattr(self, '_clip_mime_type'):
@@ -131,9 +131,6 @@ elif platform == 'linux':
 if USE_SDL2:
     _clipboards.append(
         ('sdl2', 'clipboard_sdl2', 'ClipboardSDL2'))
-else:
-    _clipboards.append(
-        ('pygame', 'clipboard_pygame', 'ClipboardPygame'))
 
 _clipboards.append(
     ('dummy', 'clipboard_dummy', 'ClipboardDummy'))
