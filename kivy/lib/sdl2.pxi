@@ -160,6 +160,9 @@ cdef extern from "SDL.h":
     ctypedef enum SDL_EventType:
         SDL_FIRSTEVENT     = 0,
         SDL_DROPFILE       = 0x1000,
+        SDL_DROPTEXT
+        SDL_DROPBEGIN
+        SDL_DROPCOMPLETE
         SDL_QUIT           = 0x100
         SDL_WINDOWEVENT    = 0x200
         SDL_SYSWMEVENT
@@ -223,6 +226,10 @@ cdef extern from "SDL.h":
         SDL_WINDOWEVENT_FOCUS_LOST     #< Window has lost keyboard focus */
         SDL_WINDOWEVENT_CLOSE          #< The window manager requests that the
                                         # window be closed */
+        SDL_WINDOWEVENT_TAKE_FOCUS     #< Window is being offered a focus (should SetWindowInputFocus() on itself or a subwindow, or ignore) */
+        SDL_WINDOWEVENT_HIT_TEST       #< Window had a hit test that wasn't SDL_HITTEST_NORMAL */
+        SDL_WINDOWEVENT_ICCPROF_CHANGED # [Added in SDL 2.0.18] < The ICC profile of the window's display has changed. */
+        SDL_WINDOWEVENT_DISPLAY_CHANGED # [Added in SDL 2.0.18] < Window has been moved to display data1. */
 
     ctypedef enum SDL_HintPriority:
         SDL_HINT_DEFAULT
@@ -249,6 +256,8 @@ cdef extern from "SDL.h":
         SDL_WINDOW_FOREIGN = 0x00000800         #            /**< window not created by SDL */
         SDL_WINDOW_FULLSCREEN_DESKTOP
         SDL_WINDOW_ALLOW_HIGHDPI
+        SDL_WINDOW_SKIP_TASKBAR = 0x00010000    #,   /**< window should not be added to the taskbar */
+        SDL_WINDOW_METAL = 0x20000000           #,          /**< window usable for Metal view */
 
     ctypedef enum SDL_HitTestResult:
         SDL_HITTEST_NORMAL
@@ -422,6 +431,7 @@ cdef extern from "SDL.h":
     ctypedef struct SDL_Texture
     ctypedef struct SDL_Renderer
     ctypedef struct SDL_Window
+    ctypedef struct SDL_MetalView
     ctypedef struct SDL_DisplayMode:
         Uint32 format
         int w
@@ -461,7 +471,7 @@ cdef extern from "SDL.h":
     ctypedef enum SDL_Scancode:
         pass
 
-    ctypedef int SDL_EventFilter(void* userdata, SDL_Event* event)
+    ctypedef int (*SDL_EventFilter)(void* userdata, SDL_Event* event)
     # for windows only see
     # https://github.com/LuaDist/sdl/blob/master/include/begin_code.h#L68
     IF UNAME_SYSNAME == 'Windows':
@@ -473,6 +483,8 @@ cdef extern from "SDL.h":
     cdef char *SDL_HINT_VIDEO_WIN_D3DCOMPILER
     cdef char *SDL_HINT_ACCELEROMETER_AS_JOYSTICK
     cdef char *SDL_HINT_ANDROID_TRAP_BACK_BUTTON
+    cdef char *SDL_HINT_WINDOWS_DPI_AWARENESS
+    cdef char *SDL_HINT_WINDOWS_DPI_SCALING
 
     cdef int SDL_QUERY               = -1
     cdef int SDL_IGNORE              =  0
@@ -525,7 +537,7 @@ cdef extern from "SDL.h":
     cdef void SDL_Delay(Uint32 ms) nogil
     cdef Uint8 SDL_EventState(Uint32 type, int state)
     cdef int SDL_PollEvent(SDL_Event * event) nogil
-    cdef void SDL_SetEventFilter(SDL_EventFilter *filter, void* userdata)
+    cdef void SDL_SetEventFilter(SDL_EventFilter filter, void* userdata)
     cdef SDL_RWops * SDL_RWFromFile(char *file, char *mode)
     cdef SDL_RWops * SDL_RWFromMem(void *mem, int size)
     cdef SDL_RWops * SDL_RWFromConstMem(void *mem, int size)
@@ -540,7 +552,8 @@ cdef extern from "SDL.h":
     cdef char * SDL_GetError()
     cdef SDL_bool SDL_SetHint(char *name, char *value)
     cdef SDL_bool SDL_SetHintWithPriority(char *name, char *value, SDL_HintPriority priority)
-    cdef Uint8 SDL_GetMouseState(int* x,int* y)
+    cdef Uint32 SDL_GetMouseState(int* x,int* y)
+    cdef Uint32 SDL_GetGlobalMouseState(int *x, int *y)
     cdef SDL_GLContext SDL_GL_CreateContext(SDL_Window* window)
     cdef int SDL_GetNumVideoDisplays()
     cdef int SDL_GetNumDisplayModes(int displayIndex)
@@ -593,6 +606,7 @@ cdef extern from "SDL.h":
     cdef void SDL_GetWindowSize(SDL_Window * window, int *w, int *h)
     cdef void SDL_SetWindowMinimumSize(SDL_Window * window, int min_w, int min_h)
     cdef void SDL_SetWindowBordered(SDL_Window * window, SDL_bool bordered)
+    cdef void SDL_SetWindowAlwaysOnTop(SDL_Window * window, SDL_bool on_top)
     cdef void SDL_ShowWindow(SDL_Window * window)
     cdef int SDL_ShowCursor(int toggle)
     cdef void SDL_SetCursor(SDL_Cursor * cursor)
@@ -623,7 +637,7 @@ cdef extern from "SDL.h":
     cdef SDL_GLContext SDL_GL_GetCurrentContext()
     cdef int SDL_GL_SetSwapInterval(int interval)
     cdef int SDL_GL_GetSwapInterval()
-    cdef void SDL_GL_SwapWindow(SDL_Window * window)
+    cdef void SDL_GL_SwapWindow(SDL_Window * window) nogil
     cdef void SDL_GL_DeleteContext(SDL_GLContext context)
 
     cdef int SDL_NumJoysticks()
@@ -644,8 +658,12 @@ cdef extern from "SDL.h":
     cdef void SDL_SetTextInputRect(SDL_Rect *rect)
     cdef SDL_bool SDL_HasScreenKeyboardSupport()
     cdef SDL_bool SDL_IsScreenKeyboardShown(SDL_Window *window)
-    cdef void SDL_GL_GetDrawableSize(SDL_Window *window, int *w, int *h)
+    cdef void SDL_GetWindowSizeInPixels(SDL_Window *window, int *w, int *h)
     cdef int SDL_SetWindowHitTest(SDL_Window *window, SDL_HitTest callback, void *callback_data)
+    cdef SDL_MetalView SDL_Metal_CreateView(SDL_Window * window)
+    cdef void* SDL_Metal_GetLayer(SDL_MetalView view)
+
+
     # Sound audio formats
     Uint16 AUDIO_U8     #0x0008  /**< Unsigned 8-bit samples */
     Uint16 AUDIO_S8     #0x8008  /**< Signed 8-bit samples */
@@ -745,6 +763,8 @@ cdef extern from "SDL_ttf.h":
     cdef void  TTF_SetFontStyle(TTF_Font *font, int style)
     cdef int  TTF_GetFontOutline( TTF_Font *font)
     cdef void  TTF_SetFontOutline(TTF_Font *font, int outline)
+    cdef int TTF_SetFontDirection(TTF_Font *font, int direction)
+    cdef int TTF_SetFontScriptName(TTF_Font *font, const char *script)
 
     #Set and retrieve FreeType hinter settings */
     ##define TTF_HINTING_NORMAL    0
@@ -757,6 +777,11 @@ cdef extern from "SDL_ttf.h":
     cdef int TTF_HINTING_NONE
     cdef int  TTF_GetFontHinting( TTF_Font *font)
     cdef void  TTF_SetFontHinting(TTF_Font *font, int hinting)
+
+    cdef int TTF_DIRECTION_LTR
+    cdef int TTF_DIRECTION_RTL
+    cdef int TTF_DIRECTION_TTB
+    cdef int TTF_DIRECTION_BTT
 
     #Get the total height of the font - usually equal to point size
     cdef int  TTF_FontHeight( TTF_Font *font)
@@ -904,6 +929,10 @@ cdef extern from "SDL_audio.h":
         int dst_rate
     )
     cdef int SDL_ConvertAudio(SDL_AudioCVT *cvt)
+
+cdef extern from "SDL_video.h":
+    cdef int SDL_SetWindowOpacity(SDL_Window *window, float opacity)
+    cdef int SDL_GetWindowOpacity(SDL_Window *window, float *opacity)
 
 cdef extern from "SDL_mixer.h":
     cdef struct Mix_Chunk:

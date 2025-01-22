@@ -152,7 +152,7 @@ def install_twisted_reactor(**kwargs):
     to do some work.
 
     Any arguments or keyword arguments passed to this function will be
-    passed on the the threadedselect reactors interleave function. These
+    passed on the threadedselect reactors interleave function. These
     are the arguments one would usually pass to twisted's reactor.startRunning.
 
     Unlike the default twisted reactor, the installed reactor will not handle
@@ -227,7 +227,11 @@ def install_twisted_reactor(**kwargs):
             Logger.info("Support: Stopping twisted threads")
             reactor.threadpool.stop()
         Logger.info("Support: Shutting down twisted reactor")
-        reactor._mainLoopShutdown()
+        # twisted <= 24.3.0
+        if hasattr(reactor, '_mainLoopShutdown'):
+            reactor._mainLoopShutdown()
+        else:
+            reactor._uninstallHandler()
         try:
             reactor.stop()
         except ReactorNotRunning:

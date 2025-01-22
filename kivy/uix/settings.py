@@ -177,7 +177,6 @@ from kivy.factory import Factory
 from kivy.metrics import dp
 from kivy.config import ConfigParser
 from kivy.animation import Animation
-from kivy.compat import string_types, text_type
 from kivy.core.window import Window
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.tabbedpanel import TabbedPanelHeader
@@ -324,7 +323,7 @@ class SettingItem(FloatLayout):
             return
         # get current value in config
         panel = self.panel
-        if not isinstance(value, string_types):
+        if not isinstance(value, str):
             value = str(value)
         panel.set_value(self.section, self.key, value)
 
@@ -602,9 +601,9 @@ class SettingNumeric(SettingString):
         self._dismiss()
         try:
             if is_float:
-                self.value = text_type(float(self.textinput.text))
+                self.value = str(float(self.textinput.text))
             else:
-                self.value = text_type(int(self.textinput.text))
+                self.value = str(int(self.textinput.text))
         except ValueError:
             return
 
@@ -672,7 +671,7 @@ class SettingTitle(Label):
     '''A simple title label, used to organize the settings in sections.
     '''
 
-    title = Label.text
+    title = StringProperty()
 
     panel = ObjectProperty(None)
 
@@ -1023,7 +1022,7 @@ class Settings(BoxLayout):
         to the user.
         '''
         cls = self.interface_cls
-        if isinstance(cls, string_types):
+        if isinstance(cls, str):
             cls = Factory.get(cls)
         interface = cls()
         self.interface = interface
@@ -1060,7 +1059,7 @@ class Settings(BoxLayout):
                 data = json.loads(fd.read())
         else:
             data = json.loads(data)
-        if type(data) != list:
+        if not isinstance(data, list):
             raise ValueError('The first element must be a list')
         panel = SettingsPanel(title=title, settings=self, config=config)
 
@@ -1106,7 +1105,7 @@ class Settings(BoxLayout):
 
 class SettingsWithSidebar(Settings):
     '''A settings widget that displays settings panels with a sidebar to
-    switch between them. This is the default behaviour of
+    switch between them. This is the default behavior of
     :class:`Settings`, and this widget is a trivial wrapper subclass.
 
     '''
@@ -1147,7 +1146,7 @@ class SettingsWithNoMenu(Settings):
 
         This Settings panel does *not* provide a Close
         button, and so it is impossible to leave the settings screen
-        unless you also add other behaviour or override
+        unless you also add other behavior or override
         :meth:`~kivy.app.App.display_settings` and
         :meth:`~kivy.app.App.close_settings`.
 
@@ -1323,7 +1322,7 @@ if __name__ == '__main__':
             {
                 'type': 'color',
                 'title': 'Test color',
-                'desc': 'Your choosen Color',
+                'desc': 'Your chosen Color',
                 'section': 'colorselection',
                 'key': 'testcolor'
             }])

@@ -4,7 +4,7 @@ Configure Kivy
 ==============
 
 The configuration file for kivy is named `config.ini`, and adheres
-to the `standard INI <http://en.wikipedia.org/wiki/INI_file>`_ format.
+to the `standard INI <https://en.wikipedia.org/wiki/INI_file>`_ format.
 
 Locating the configuration file
 -------------------------------
@@ -21,7 +21,7 @@ On desktop, this defaults to::
 Therefore, if your user is named "tito", the file will be here:
 
 - Windows: ``C:\Users\tito\.kivy\config.ini``
-- OS X: ``/Users/tito/.kivy/config.ini``
+- macOS: ``/Users/tito/.kivy/config.ini``
 - Linux: ``/home/tito/.kivy/config.ini``
 
 On Android, this defaults to::
